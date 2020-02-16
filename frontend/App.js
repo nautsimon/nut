@@ -33,7 +33,9 @@ export default class App extends Component {
       satFat: "",
       fiber: "",
       calcium: "",
-      loading: false
+      modalPort: false,
+      loading: false,
+      modalCheck: false
     };
 
     this.modalNotVisible = this.modalNotVisible.bind(this);
@@ -45,6 +47,7 @@ export default class App extends Component {
   }
   takePicture = async function() {
     if (this.camera) {
+      this.camera.resumePreview();
       // Pause the camera's preview
       this.camera.pausePreview();
 
@@ -107,7 +110,6 @@ export default class App extends Component {
             console.warn(error);
           })
           .finally(function() {
-            console.warn(id);
             resolve(id);
           });
       });
@@ -130,36 +132,38 @@ export default class App extends Component {
               "?api_key=r1cp9Tfs8GhQENWYJuXzRHMhHdB5Badyi6fgkIfE"
           )
           .then(function(response) {
-            if (typeof response.data.labelNutrients === "object") {
-              if (typeof response.data.labelNutrients.calories === "object") {
+            if (typeof response.data.labelNutrients !== "undefined") {
+              if (
+                typeof response.data.labelNutrients.calories !== "undefined"
+              ) {
                 calories = response.data.labelNutrients.calories.value;
-                console.warn("calories", calories);
+                // console.warn("calories", calories);
               }
-              if (typeof response.data.labelNutrients.fat === "object") {
+              if (typeof response.data.labelNutrients.fat !== "undefined") {
                 fat = response.data.labelNutrients.fat.value;
-                console.warn("fat", typeof fat);
+                // console.warn("fat", typeof fat);
               }
-              if (typeof response.data.labelNutrients.sodium === "object") {
+              if (typeof response.data.labelNutrients.sodium !== "undefined") {
                 sodium = response.data.labelNutrients.sodium.value;
-                console.warn("sodium", typeof sodium);
+                // console.warn("sodium", typeof sodium);
               }
-              if (typeof response.data.labelNutrients.protein === "object") {
+              if (typeof response.data.labelNutrients.protein !== "undefined") {
                 protein = response.data.labelNutrients.protein.value;
-                console.warn("protein", typeof protein);
+                // console.warn("protein", typeof protein);
               }
               if (
-                typeof response.data.labelNutrients.saturatedFat === "object"
+                typeof response.data.labelNutrients.saturatedFat !== "undefined"
               ) {
                 satFat = response.data.labelNutrients.satFat.value;
-                console.warn("satFat", satFat);
+                // console.warn("satFat", satFat);
               }
-              if (typeof response.data.labelNutrients.fiber === "object") {
+              if (typeof response.data.labelNutrients.fiber !== "undefined") {
                 fiber = response.data.labelNutrients.fiber.value;
-                console.warn("fiber", fiber);
+                // console.warn("fiber", fiber);
               }
-              if (typeof response.data.labelNutrients.calcium === "object") {
+              if (typeof response.data.labelNutrients.calcium !== "undefined") {
                 calcium = response.data.labelNutrients.calcium.value;
-                console.warn("calcium", calcium);
+                // console.warn("calcium", calcium);
               }
 
               // console.warn(Object.keys(response.data.labelNutrients));
@@ -176,28 +180,19 @@ export default class App extends Component {
 
           .catch(function(error) {
             // handle error
-            console.warn(error);
+            console.log(error);
           })
 
           .finally(function() {
-            console.warn(takeAnother, calories, sodium);
+            // console.warn(takeAnother, calories, sodium);
             if (takeAnother) {
+              var temp = "damn";
               Alert.alert("retake picture", "", { cancelable: false });
-              this.camera.resumePreview();
-              this.setState((previousState, props) => ({
-                takeAnother: "takeAnother",
-                loading: false
-              }));
+              resolve(temp);
+              // this.camera.resumePreview().then(() => {
+              //   resolve(temp);
+              // });
             } else {
-              console.warn(
-                calories,
-                fat,
-                sodium,
-                protein,
-                satFat,
-                fiber,
-                calcium
-              );
               var temp = [
                 calories,
                 fat,
@@ -218,37 +213,114 @@ export default class App extends Component {
         return getNut(id);
       })
       .then(temp => {
-        console.warn(temp);
-        return this.setState({
-          calories: temp[0],
-          fat: temp[1],
-          sodium: temp[2],
-          protein: temp[3],
-          satFat: temp[4],
-          fiber: temp[5],
-          calcium: temp[6],
-          identifedAs: identifiedImage,
-          loading: false,
-          modalVisible: true
-        });
+        if (temp === "damn") {
+          return this.modalNotVisible();
+        } else {
+          return this.setState({
+            calories: temp[0],
+            fat: temp[1],
+            sodium: temp[2],
+            protein: temp[3],
+            satFat: temp[4],
+            fiber: temp[5],
+            calcium: temp[6],
+            identifedAs: identifiedImage,
+            loading: false,
+            modalVisible: true
+          });
+        }
       });
   }
-  // Dismiss the acitivty indicator
-  //   this.getNutInfo(identifiedImage);
-  //   this.setState((previousState, props) => ({
-  //     identifedAs: identifiedImage,
-  //     loading: false,
-  //     modalVisible: true
-  //   }));
-  // }
 
   modalNotVisible() {
     this.camera.resumePreview();
     this.setState((previousState, props) => ({
-      modalVisible: false
+      modalVisible: false,
+      loading: false,
+      modalCheck: false
     }));
   }
+  modalSwitch() {
+    this.camera.resumePreview();
+    this.setState((previousState, props) => ({
+      modalVisible: false,
+      loading: false,
+      modalPort: true
+    }));
+  }
+  handleEating(portion) {
+    var calories = this.state.calories * portion;
+    var fat = this.state.fat * portion;
+    var sodium = this.state.sodium * portion;
+    var protein = this.state.protein * portion;
+    var satFat = this.state.satFat * portion;
+    var fiber = this.state.fiber * portion;
+    var calcium = this.state.calcium * portion;
 
+    let sendData = function(input) {
+      return new Promise(function(resolve, reject) {
+        axios
+          .post("http://nutr-268322.appspot.com/update/", {
+            calories: calories,
+            fat: fat,
+            sodium: sodium,
+            protein: protein,
+            satFat: satFat,
+            fiber: fiber,
+            calcium: calcium
+          })
+
+          .then(function(response) {
+            // handle success
+          })
+          .catch(function(error) {
+            // handle error
+          })
+          .finally(function() {});
+      });
+    };
+
+    sendData().then(() => {
+      return this.setState((previousState, props) => ({
+        modalPort: false
+      }));
+    });
+  }
+
+  handleCheck() {
+    let getData = function(input) {
+      return new Promise(function(resolve, reject) {
+        axios
+          .get("http://nutr-268322.appspot.com/get/")
+          .then(function(response) {
+            // handle success
+            temp = [];
+
+            //console.log(response.data.foods[0].fdcId);
+          })
+          .catch(function(error) {
+            // handle error
+            console.warn(error);
+          })
+          .finally(function() {
+            resolve(id);
+          });
+      });
+    };
+
+    getData().then(data => {
+      return this.setState({
+        calories: temp[0],
+        fat: temp[1],
+        sodium: temp[2],
+        protein: temp[3],
+        satFat: temp[4],
+        fiber: temp[5],
+        calcium: temp[6],
+        modalCheck: true
+      });
+    });
+  }
   handleCameraType = () => {
     const { cameraType } = this.state;
 
@@ -285,7 +357,8 @@ export default class App extends Component {
                   flex: 1,
                   flexDirection: "column",
                   justifyContent: "center",
-                  alignItems: "center"
+                  alignItems: "center",
+                  backgroundColor: "rgba(25, 209, 252, 0.7)"
                 }}
               >
                 <View
@@ -294,20 +367,224 @@ export default class App extends Component {
                     height: 300
                   }}
                 >
+                  <Text>Food: {this.state.identifedAs}</Text>
                   <Text>Calories: {this.state.calories}</Text>
-                  <Text>Fat: {this.state.fat}</Text>
-                  <Text>Sodium: {this.state.sodium}</Text>
-                  <Text>Protein: {this.state.protein}</Text>
-                  <Text>Saturated Fat: {this.state.satFat}</Text>
-                  <Text>Fiber: {this.state.fiber}</Text>
-                  <Text>Calcium: {this.state.calcium}</Text>
-                  <TouchableHighlight onPress={() => this.modalNotVisible()}>
-                    <Text>Close</Text>
-                  </TouchableHighlight>
+                  <Text>Fat: {this.state.fat} g</Text>
+                  <Text>Sodium: {this.state.sodium} mg</Text>
+                  <Text>Protein: {this.state.protein} g</Text>
+                  <Text>Saturated Fat: {this.state.satFat} g</Text>
+                  <Text>Fiber: {this.state.fiber} g</Text>
+                  <Text>Calcium: {this.state.calcium} mg</Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.modalNotVisible()}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        Cool, not eatin this
+                      </Text>
+                    </TouchableHighlight>
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
+
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.modalSwitch()}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        Nice, im eating this
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
                 </View>
               </View>
             </Modal>
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={this.state.modalVisible}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(25, 209, 252, 0.7)"
+                }}
+              >
+                <View
+                  style={{
+                    width: 300,
+                    height: 300
+                  }}
+                >
+                  <Text>Food: {this.state.identifedAs}</Text>
+                  <Text>Calories: {this.state.calories}</Text>
+                  <Text>Fat: {this.state.fat} g</Text>
+                  <Text>Sodium: {this.state.sodium} mg</Text>
+                  <Text>Protein: {this.state.protein} g</Text>
+                  <Text>Saturated Fat: {this.state.satFat} g</Text>
+                  <Text>Fiber: {this.state.fiber} g</Text>
+                  <Text>Calcium: {this.state.calcium} mg</Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.modalNotVisible()}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        Cool, not eatin this
+                      </Text>
+                    </TouchableHighlight>
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
 
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.modalSwitch()}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        Nice, im eating this
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={this.state.modalPort}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(25, 209, 252, 0.7)"
+                }}
+              >
+                <View
+                  style={{
+                    width: 300,
+                    height: 300
+                  }}
+                >
+                  <Text>Number of Servings</Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.handleEating(1)}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        1
+                      </Text>
+                    </TouchableHighlight>
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.handleEating(2)}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        2
+                      </Text>
+                    </TouchableHighlight>
+                    <TouchableHighlight
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: 3,
+                        marginTop: 15,
+                        backgroundColor: "rgba(57, 143, 198, 0.7)"
+                      }}
+                      onPress={() => this.handleEating(3)}
+                    >
+                      <Text
+                        style={{
+                          padding: 10
+                        }}
+                      >
+                        3
+                      </Text>
+                    </TouchableHighlight>
+                  </View>
+                </View>
+              </View>
+            </Modal>
             <View
               style={{
                 flex: 1,

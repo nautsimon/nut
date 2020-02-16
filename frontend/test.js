@@ -70,26 +70,6 @@ export default class App extends React.Component {
                 justifyContent: "flex-end"
               }}
             >
-              <View
-                style={{
-                  flex: 1,
-                  alignSelf: "flex-start",
-                  alignItems: "center"
-                }}
-              >
-                <FlatList
-                  data={predictions.map(prediction => ({
-                    key: `${prediction.name} ${prediction.value}`
-                  }))}
-                  renderItem={({ item }) => (
-                    <Text
-                      style={{ paddingLeft: 15, color: "white", fontSize: 20 }}
-                    >
-                      {item.key}
-                    </Text>
-                  )}
-                />
-              </View>
               <TouchableOpacity
                 style={{
                   flex: 0.1,
