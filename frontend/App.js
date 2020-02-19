@@ -107,7 +107,6 @@ export default class App extends Component {
           })
           .catch(function(error) {
             // handle error
-            console.warn(error);
           })
           .finally(function() {
             resolve(id);
@@ -237,6 +236,7 @@ export default class App extends Component {
     this.setState((previousState, props) => ({
       modalVisible: false,
       loading: false,
+      modalPort: false,
       modalCheck: false
     }));
   }
@@ -245,7 +245,8 @@ export default class App extends Component {
     this.setState((previousState, props) => ({
       modalVisible: false,
       loading: false,
-      modalPort: true
+      modalPort: true,
+      modalCheck: false
     }));
   }
   handleEating(portion) {
@@ -259,6 +260,19 @@ export default class App extends Component {
 
     let sendData = function(input) {
       return new Promise(function(resolve, reject) {
+        // var data = querystring.stringify({
+        //   params: JSON.stringify({
+        //     calories: calories,
+        //     fat: fat,
+        //     sodium: sodium,
+        //     protein: protein,
+        //     satFat: satFat,
+        //     fiber: fiber,
+        //     calcium: calcium
+        //   })
+        // });
+        // axios
+        //   .post("http://nutr-268322.appspot.com/update/", data)
         axios
           .post("http://nutr-268322.appspot.com/update/", {
             calories: calories,
@@ -276,7 +290,9 @@ export default class App extends Component {
           .catch(function(error) {
             // handle error
           })
-          .finally(function() {});
+          .finally(function() {
+            resolve("swag");
+          });
       });
     };
 
@@ -288,13 +304,21 @@ export default class App extends Component {
   }
 
   handleCheck() {
+    var temp = [];
     let getData = function(input) {
       return new Promise(function(resolve, reject) {
         axios
           .get("http://nutr-268322.appspot.com/get/")
           .then(function(response) {
-            // handle success
-            temp = [];
+            temp = [
+              response.data.calories,
+              response.data.fat,
+              response.data.sodium,
+              response.data.protein,
+              response.data.satFat,
+              response.data.fiber,
+              response.data.calcium
+            ];
 
             //console.log(response.data.foods[0].fdcId);
           })
@@ -303,12 +327,12 @@ export default class App extends Component {
             console.warn(error);
           })
           .finally(function() {
-            resolve(id);
+            resolve(temp);
           });
       });
     };
 
-    getData().then(data => {
+    getData().then(temp => {
       return this.setState({
         calories: temp[0],
         fat: temp[1],
@@ -350,7 +374,7 @@ export default class App extends Component {
             <Modal
               animationType="slide"
               transparent={true}
-              visible={this.state.modalVisible}
+              visible={this.state.modalCheck}
             >
               <View
                 style={{
@@ -364,17 +388,46 @@ export default class App extends Component {
                 <View
                   style={{
                     width: 300,
-                    height: 300
+                    height: 500
                   }}
                 >
-                  <Text>Food: {this.state.identifedAs}</Text>
+                  <Text>YOUR INTAKE FOR TODAY</Text>
                   <Text>Calories: {this.state.calories}</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {2000 - this.state.calories} more calories to reach
+                    your daily intake
+                  </Text>
                   <Text>Fat: {this.state.fat} g</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {52 - this.state.fat} g more calories to reach your
+                    daily intake
+                  </Text>
                   <Text>Sodium: {this.state.sodium} mg</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {3400 - this.state.sodium} mg more calories to
+                    reach your daily intake
+                  </Text>
+
                   <Text>Protein: {this.state.protein} g</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {56 - this.state.protein} g more calories to reach
+                    your daily intake
+                  </Text>
                   <Text>Saturated Fat: {this.state.satFat} g</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {13 - this.state.satFat} g more calories to reach
+                    your daily intake
+                  </Text>
                   <Text>Fiber: {this.state.fiber} g</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {27 - this.state.fiber} g more calories to reach
+                    your daily intake
+                  </Text>
                   <Text>Calcium: {this.state.calcium} mg</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    You need {1000 - this.state.calcium} mg more calories to
+                    reach your daily intake
+                  </Text>
                   <View
                     style={{
                       flex: 1,
@@ -388,6 +441,7 @@ export default class App extends Component {
                         justifyContent: "center",
                         margin: 3,
                         marginTop: 15,
+                        width: 300,
                         backgroundColor: "rgba(57, 143, 198, 0.7)"
                       }}
                       onPress={() => this.modalNotVisible()}
@@ -397,26 +451,7 @@ export default class App extends Component {
                           padding: 10
                         }}
                       >
-                        Cool, not eatin this
-                      </Text>
-                    </TouchableHighlight>
-                    <TouchableHighlight
-                      style={{
-                        alignItems: "center",
-                        justifyContent: "center",
-                        margin: 3,
-                        marginTop: 15,
-
-                        backgroundColor: "rgba(57, 143, 198, 0.7)"
-                      }}
-                      onPress={() => this.modalSwitch()}
-                    >
-                      <Text
-                        style={{
-                          padding: 10
-                        }}
-                      >
-                        Nice, im eating this
+                        Cool
                       </Text>
                     </TouchableHighlight>
                   </View>
@@ -531,8 +566,10 @@ export default class App extends Component {
                       style={{
                         alignItems: "center",
                         justifyContent: "center",
-                        margin: 3,
-                        marginTop: 15,
+                        margin: 7,
+                        marginTop: 7,
+                        width: 90,
+                        height: 90,
                         backgroundColor: "rgba(57, 143, 198, 0.7)"
                       }}
                       onPress={() => this.handleEating(1)}
@@ -549,8 +586,10 @@ export default class App extends Component {
                       style={{
                         alignItems: "center",
                         justifyContent: "center",
-                        margin: 3,
-                        marginTop: 15,
+                        margin: 7,
+                        marginTop: 7,
+                        width: 90,
+                        height: 90,
                         backgroundColor: "rgba(57, 143, 198, 0.7)"
                       }}
                       onPress={() => this.handleEating(2)}
@@ -567,8 +606,10 @@ export default class App extends Component {
                       style={{
                         alignItems: "center",
                         justifyContent: "center",
-                        margin: 3,
-                        marginTop: 15,
+                        margin: 7,
+                        marginTop: 7,
+                        width: 90,
+                        height: 90,
                         backgroundColor: "rgba(57, 143, 198, 0.7)"
                       }}
                       onPress={() => this.handleEating(3)}
@@ -582,6 +623,25 @@ export default class App extends Component {
                       </Text>
                     </TouchableHighlight>
                   </View>
+                  <TouchableHighlight
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: 3,
+                      marginTop: 15,
+                      width: 300,
+                      backgroundColor: "rgba(57, 143, 198, 0.7)"
+                    }}
+                    onPress={() => this.modalNotVisible()}
+                  >
+                    <Text
+                      style={{
+                        padding: 10
+                      }}
+                    >
+                      Cancel
+                    </Text>
+                  </TouchableHighlight>
                 </View>
               </View>
             </Modal>
@@ -618,6 +678,7 @@ export default class App extends Component {
                   alignItems: "center",
                   backgroundColor: "transparent"
                 }}
+                onPress={() => this.handleCheck()}
               >
                 <Ionicons
                   name="ios-photos"
